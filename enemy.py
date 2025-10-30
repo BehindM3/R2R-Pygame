@@ -39,12 +39,14 @@ class Enemy(Character):
         path_idle = f"{base_path}/Idle.png"
         path_run = f"{base_path}/Run.png"
         path_atack = f"{base_path}/Attack1.png"
+        path_dead = "./assets/particles/multiple/Effect.png"
         
         # Cargamos las imagenes y manejamos errores
         try:
             spritesheet_idle = pygame.image.load(path_idle).convert_alpha()
             spritesheet_run = pygame.image.load(path_run).convert_alpha()
             spritesheet_atack = pygame.image.load(path_atack).convert_alpha()
+            spritesheet_dead = pygame.image.load(path_dead).convert_alpha()
         except pygame.error as e:
             print(f"Error al cargar el sprite del enemigo ({ENEMY_CLASS}): {e}")
             pygame.quit()
@@ -58,7 +60,7 @@ class Enemy(Character):
             frame = spritesheet_idle.subsurface(pygame.Rect(coord))
             frame_idle_list.append(pygame.transform.scale(frame, (64, 64)))
 
-        self.animation["idle"] = frame_idle_list
+        self.animation[settings.IDLE] = frame_idle_list
 
         # Cargamos animacion de run
         frame_run_list = []
@@ -68,7 +70,7 @@ class Enemy(Character):
             frame = spritesheet_run.subsurface(pygame.Rect(coord))
             frame_run_list.append(pygame.transform.scale(frame, (64, 64)))
 
-        self.animation["run"] = frame_run_list
+        self.animation[settings.RUN] = frame_run_list
 
         # Cargar animacion de atack
         frame_atack_list = []
@@ -80,12 +82,24 @@ class Enemy(Character):
 
         self.animation[settings.ATACK] = frame_atack_list
 
+        #Cargamos animacion de muerte
+        frame_dead_list = []
+        coords_dead = [(1393,24,97,122),(1585,31,96,114),(1787,29,86,110),(1979,28,85,97),(1959,42,85,97)]
+
+        for coord in coords_dead:
+            frame = spritesheet_dead.subsurface(pygame.Rect(coord))
+            gray_frame = settings.grayscale(frame)
+            frame_dead_list.append(pygame.transform.scale(gray_frame, (64, 64)))
+
+        self.animation[settings.DEATH] = frame_dead_list
+
     def update(self, player_x, player_y):
         if not self.stats.alive:
             if self.actual_status != settings.DEATH:
                 self.set_status(settings.DEATH)
                 self.index_frame = len(self.animation.get(settings.DEATH, [None])) -1
-                return
+            self.update_animation()
+            return
         
         now = pygame.time.get_ticks()
         dx = player_x - self.rect.centerx
@@ -145,3 +159,23 @@ class Enemy(Character):
         debug_circle_pos = (pos_in_screen_x + self.rect.width // 2, pos_in_screen_y - 10)
         
         pygame.draw.circle(surface, debug_color, debug_circle_pos, 5)
+
+    def die(self):
+        super().die()
+
+        gem_types = []
+        gem_weights = []
+
+        for gem_type, (coords,xp,weight) in settings.GEM_STATS.items():
+            if weight > 0:
+                gem_types.append(gem_type)
+                gem_weights.append(weight)
+            
+        if not gem_types:
+            return None
+
+        gem_type_to_drop = random.choices(gem_types, weights = gem_weights, k=1)[0]
+
+        new_gem = Gem(self.rect.centerx, self.rect.centery, gem_type_to_drop)
+        
+        return new_gem

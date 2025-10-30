@@ -105,14 +105,21 @@ while running:
             if enemy.stats.alive and player_world_hitbox.colliderect(enemy.rect) and enemy.actual_status == ATACK:
                 character.take_damage(enemy.stats.damage)
                 print(f"Vida actual del personaje: {character.stats.health}")
-                
+
+    if character.stats.alive:
+        for gem in list_gems:
+            if gem.is_active and player_world_hitbox.colliderect(gem.rect):
+                character.add_xp(gem.xp_value)
+                gem.is_active = False
+
+
     if character.stats.alive:
         for gem in list_gems:
             if gem.is_active and player_world_hitbox.colliderect(gem.rect):
                 print(f"¡Gema {gem.type} recogida! Valor: {gem.xp_value}")
                 gem.is_active = False
 
-    SCREEN.fill(BLACK)
+    SCREEN.fill(GREEN)
 
     character.draw(SCREEN)
     pygame.draw.rect(SCREEN, RED, character.rect, 2)
@@ -127,8 +134,15 @@ while running:
         gem.draw(SCREEN, camera_x, camera_y)
 
     list_of_arrows = [arrow for arrow in list_of_arrows if arrow.is_active]
-    enemies_list = [enemy for enemy in enemies_list if enemy.stats.alive]
     list_gems = [gem for gem in list_gems if gem.is_active]
+
+    active_enemies = []
+    for en in enemies_list:
+        if en.stats.alive or (not en.stats.alive and not en.animation_finished):
+            active_enemies.append(en)
+        else:
+            print(f"DEBUG: Eliminando enemigo {enemy.rect.topleft} (Muerto y animación terminada)")
+        enemies_list = active_enemies
 
     clock.tick(FPS)
     pygame.display.flip()

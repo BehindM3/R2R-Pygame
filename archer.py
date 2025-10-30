@@ -3,6 +3,7 @@ import settings
 from character import Character
 from stats import Stats
 from arrow import Arrow
+from gem import Gem
 
 class Archer(Character):
 
@@ -11,11 +12,11 @@ class Archer(Character):
         player_stats = Stats(
             health=100, 
             damage=20,
-            speed=settings.PLAYER_SPEED
+            speed=settings.PLAYER_SPEED,
+            xp_to_next_level=100
         )
 
         super().__init__(stats_obj=player_stats)
-        self.attack_spawn_frame = 6
 
         #Cargar imagenes del arquero
         self.load_sprites(colour)
@@ -94,5 +95,10 @@ class Archer(Character):
         new_arrow = Arrow(player_world_x, player_world_y, self.facing_direction)
         return new_arrow        
 
+    def add_xp(self, amount):
+        did_level_up = self.stats.add_xp(amount)
 
+        if did_level_up:
+            print(f"La clase Archer se enteró del LEVEL UP!")
+            self.stats.heal(25)
         

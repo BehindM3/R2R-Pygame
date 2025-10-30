@@ -18,7 +18,7 @@ class Character:
         self.stats = stats_obj
         self.last_hit_time = 0
         self.invincibility_cooldown = 1000
-
+        self.animation_finished = False
 
     def set_status(self, new_status):
 
@@ -41,6 +41,8 @@ class Character:
             return
 
         speed = settings.ANIMATION_SPEED_RUN if self.actual_status == "run" else settings.ANIMATION_SPEED_IDLE        
+        action_signal = None
+
         if self.actual_status == settings.RUN:
             speed = settings.ANIMATION_SPEED_RUN
         
@@ -53,19 +55,22 @@ class Character:
         elif self.actual_status == settings.DEATH:
             speed = settings.ANIMATION_SPEED_DEATH
 
-        action_signal = None
+        self.animation_finished = False
 
         now = pygame.time.get_ticks()
         if now - self.last_update > speed:
                 self.last_update = now
                 self.index_frame += 1
-                
+                                                
                 if self.index_frame >= len(current_animation):
                     if self.actual_status in [settings.SHOOT, settings.ATACK]:
                         self.index_frame = 0
-                        self.set_status("idle")
+                        self.set_status(settings.IDLE)
+                        self.animation_finished = True
                     elif self.actual_status == settings.DEATH:
                         self.index_frame = len(current_animation) - 1
+                        self.animation_finished = True
+                        print(f"DEBUG: ¡Animación de muerte TERMINADA para {self.rect.topleft if self.rect else 'Personaje'}!")
                     else:
                         self.index_frame = 0
 
@@ -75,7 +80,7 @@ class Character:
                 if self.index_frame < len(current_animation):
                     self.image = current_animation[self.index_frame]
                 
-                return action_signal
+        return action_signal
 
     def draw(self, surface):
             if self.image and self.rect:
