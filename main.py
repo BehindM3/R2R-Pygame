@@ -1,0 +1,142 @@
+import pygame, sys
+import random
+from pygame.locals import *
+from settings import *
+from archer import Archer
+from enemy import Enemy
+from gem import Gem
+
+# Initializamos Pygame
+pygame.init()
+
+# Configuramos la pantalla
+SCREEN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+pygame.display.set_caption("Road to revenge")
+icon = pygame.image.load("./assets/Icons/icon_game.png")
+clock = pygame.time.Clock()
+
+#Declaracion y llamados a funciones
+pygame.display.set_icon(icon)
+character = Archer(colour="black")
+list_of_arrows = []
+list_gems = [] 
+camera_x, camera_y = 0, 0
+
+#Enemigo de prueba
+enemies_list = []
+NUM_ENEMIES = 5
+
+for _ in range(NUM_ENEMIES):
+    x_start = random.randint(-SCREEN_WIDTH // 2, SCREEN_WIDTH + SCREEN_WIDTH // 2)
+    y_start = random.randint(-SCREEN_HEIGHT // 2, SCREEN_HEIGHT + SCREEN_HEIGHT // 2)
+    if abs(x_start - (SCREEN_WIDTH // 2)) < 100 and abs(y_start - (SCREEN_HEIGHT // 2)) < 100:
+        x_start += random.choice([-200, 200])
+    new_enemy = Enemy(x_start, y_start)
+    enemies_list.append(new_enemy)
+
+#Bucle del juego
+while running:
+    # Manejo de eventos
+    for event in pygame.event.get():
+        if event.type == QUIT:
+            pygame.quit()
+            sys.exit()
+
+        if event.type == KEYDOWN:
+            if event.key == K_t:
+                print("Auch! Recibiendo 15 de daño.")
+                character.take_damage(15)
+                print(f"Vida actual del personaje: {character.stats.health}")
+
+    # Capturamos las teclas presionadas
+    keys_pressed = pygame.key.get_pressed()
+
+    mov_camera_x, mov_camera_y = character.handle_input(keys_pressed)
+    camera_x += mov_camera_x
+    camera_y += mov_camera_y
+
+    attack_action_signal = character.update_animation()
+    if attack_action_signal == SHOOT:
+        new_arrow = character.perform_attack_action(camera_x, camera_y)
+
+        if new_arrow:
+            list_of_arrows.append(new_arrow)
+
+
+    character_world_x = camera_x + SCREEN_WIDTH // 2
+    character_world_y = camera_y + SCREEN_HEIGHT // 2
+
+    player_world_hitbox = character.rect.copy()
+    player_world_hitbox.center = (character_world_x, character_world_y)
+
+    for enemy in enemies_list:
+        enemy.update(character_world_x, character_world_y)
+
+    for arrow in list_of_arrows:
+        arrow.update()
+
+    for gem in list_gems: 
+        gem.update(player_world_hitbox)
+
+
+
+    for arrow in list_of_arrows:
+        if arrow.is_active:
+            for enemy in enemies_list:
+                if enemy.stats.alive and arrow.rect.colliderect(enemy.rect):
+                    
+                    was_alive = enemy.stats.alive
+                    
+                    enemy.take_damage(character.stats.damage)
+                    arrow.is_active = False
+
+                    if was_alive and not enemy.stats.alive:
+                        new_gem = enemy.die()
+                        if new_gem:
+                            list_gems.append(new_gem)
+                            print(f"¡Enemigo muerto! Gema {new_gem.type} generada.")
+                    else:
+                         print(f"Enemigo dañado, vida restante: {enemy.stats.health}")
+
+                    break
+    
+    if character.stats.alive:
+        for enemy in enemies_list:
+            if enemy.stats.alive and player_world_hitbox.colliderect(enemy.rect) and enemy.actual_status == ATACK:
+                character.take_damage(enemy.stats.damage)
+                print(f"Vida actual del personaje: {character.stats.health}")
+                
+    if character.stats.alive:
+        for gem in list_gems:
+            if gem.is_active and player_world_hitbox.colliderect(gem.rect):
+                print(f"¡Gema {gem.type} recogida! Valor: {gem.xp_value}")
+                gem.is_active = False
+
+    SCREEN.fill(BLACK)
+
+    character.draw(SCREEN)
+    pygame.draw.rect(SCREEN, RED, character.rect, 2)
+
+    for enemy in enemies_list:
+        enemy.draw(SCREEN, camera_x, camera_y)
+        
+    for arrow in list_of_arrows:
+        arrow.draw(SCREEN, camera_x, camera_y)
+
+    for gem in list_gems:
+        gem.draw(SCREEN, camera_x, camera_y)
+
+    list_of_arrows = [arrow for arrow in list_of_arrows if arrow.is_active]
+    enemies_list = [enemy for enemy in enemies_list if enemy.stats.alive]
+    list_gems = [gem for gem in list_gems if gem.is_active]
+
+    clock.tick(FPS)
+    pygame.display.flip()
+
+    
+
+    
+
+
+
+
