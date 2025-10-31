@@ -40,7 +40,7 @@ class Stats:
         if self.xp >= self.xp_to_next_level:
             self._level_up()
             return True
-        
+
         return False
     
     def _level_up(self):

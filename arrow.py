@@ -43,7 +43,7 @@ class Arrow:
         if self.rect.x > 5000 or self.rect.x < -2000 or self.rect.y > 5000 or self.rect.y < -2000:
             self.is_active = False
     
-    def draw(self, surface, camera_x, camera_y):
+    def git (self, surface, camera_x, camera_y):
         pos_x = self.rect.x - camera_x
         pos_y = self.rect.y - camera_y
         surface.blit(self.image, (pos_x, pos_y))

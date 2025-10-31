@@ -101,4 +101,6 @@ class Archer(Character):
         if did_level_up:
             print(f"La clase Archer se enteró del LEVEL UP!")
             self.stats.heal(25)
+
+        return did_level_up
         

@@ -154,3 +154,4 @@ class Character:
 
     def perform_attack_action(self, camera_x, camera_y):
         return None
+    

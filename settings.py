@@ -6,6 +6,8 @@ SCREEN_WIDTH, SCREEN_HEIGHT = 1920, 1080
 
 #Variable del bucle infinito
 running = True
+PLAYING = "playing"
+LEVEL_UP = "level_up"
 
 #Ajustes de FPS
 FPS = 60
@@ -27,6 +29,12 @@ ANIMATION_SPEED_SHOOT = 100
 ANIMATION_SPEED_DEATH = 150
 ANIMATION_SPEED_ATACK = 85
 PLAYER_MAGNET_RADIUS = 150
+UPGRADE_DATA = {
+    "health_up": ("Vida maxima +", "20 Vida maxima"),
+    "damage_up": ("Daño de Flecha +", "+5 Daño"),
+    "speed_up": ("Velocidad +", "+10% Velocidad de Movimiento"),
+    "arrow_speed_up": ("Velocidad de Flecha +", "+10% Velocidad de Flecha")
+}
 
 #Ajustes del enemigo
 ENEMY_DETECTION_RADIUS = 1500.
@@ -117,3 +125,19 @@ def grayscale(surface):
     new_surface = px_array.make_surface()
     del px_array
     return new_surface
+
+def apply_upgrade(player, upgrade_key):
+    print(f"¡Mejora aplicada: {upgrade_key}!")
+    
+    if upgrade_key == "health_up":
+        player.stats.max_health += 20
+        player.stats.heal(20)
+    
+    elif upgrade_key == "damage_up":
+        player.stats.damage += 5
+        
+    elif upgrade_key == "speed_up":
+        player.stats.speed *= 1.10
+        
+    elif upgrade_key == "arrow_speed_up":
+        ARROW_SPEED *= 1.10
