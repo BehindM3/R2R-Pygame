@@ -4,7 +4,7 @@ import random
 from math import hypot
 
 try:
-    GEMS_ANIM_SPRITESHEET_SURFACE = pygame.image.load(settings.GEM_PATH_SPRITESHEET)
+    GEMS_ANIM_SPRITESHEET_SURFACE = pygame.image.load(settings.UI_PATH_SPRITESHEET)
 except Exception as e:
     print(f"Error al cargar el spritesheet de gemas: {e}")
     GEMS_ANIM_SPRITESHEET_SURFACE = None

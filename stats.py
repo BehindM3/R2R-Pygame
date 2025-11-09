@@ -1,3 +1,5 @@
+import settings
+
 class Stats:
     def __init__(self, health, damage, speed, xp_to_next_level=0):
         
@@ -5,6 +7,7 @@ class Stats:
         self.health = health
         self.damage = damage
         self.speed = speed
+        self.arrow_speed = settings.ARROW_SPEED
         self.alive = True
         self.lvl = 1
         self.xp = 0
@@ -37,11 +40,12 @@ class Stats:
         self.xp += amount
         print(f"XP: {self.xp} / {self.xp_to_next_level}")
 
-        if self.xp >= self.xp_to_next_level:
+        levels_gained = 0
+        while self.xp >= self.xp_to_next_level:
             self._level_up()
-            return True
+            levels_gained += 1
 
-        return False
+        return levels_gained
     
     def _level_up(self):
         self.lvl += 1

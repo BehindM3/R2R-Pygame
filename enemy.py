@@ -140,25 +140,7 @@ class Enemy(Character):
 
         self.update_animation()
 
-    def draw(self, surface, camera_x, camera_y):
-        pos_in_screen_x = self.rect.x - camera_x
-        pos_in_screen_y = self.rect.y - camera_y
-
-        image_to_draw = self.image
-        if not self.facing_right:
-            image_to_draw = pygame.transform.flip(self.image, True, False)
-        
-        surface.blit(image_to_draw, (pos_in_screen_x, pos_in_screen_y))
-
-        debug_color = (0, 255, 0) # Verde por defecto (run/idle)
-        if self.actual_status == "atack":
-            debug_color = (255, 0, 0) # Rojo si está atacando
-        elif self.actual_status == "death":
-             debug_color = (100, 100, 100) # Gris si está muerto
-        
-        debug_circle_pos = (pos_in_screen_x + self.rect.width // 2, pos_in_screen_y - 10)
-        
-        pygame.draw.circle(surface, debug_color, debug_circle_pos, 5)
+   
 
     def die(self):
         super().die()

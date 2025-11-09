@@ -17,7 +17,7 @@ class Character:
         self.facing_direction = "right"
         self.stats = stats_obj
         self.last_hit_time = 0
-        self.invincibility_cooldown = 1000
+        self.invincibility_cooldown = 500
         self.animation_finished = False
 
     def set_status(self, new_status):
@@ -82,12 +82,18 @@ class Character:
                 
         return action_signal
 
-    def draw(self, surface):
-            if self.image and self.rect:
-                image_to_draw = self.image
-                if not self.facing_right:
-                    image_to_draw = pygame.transform.flip(self.image, True, False)
-                surface.blit(image_to_draw, self.rect)
+    def draw(self, surface, camera_x, camera_y):
+        if self.image and self.rect:
+        
+            pos_in_screen_x = self.rect.x - camera_x
+            pos_in_screen_y = self.rect.y - camera_y
+
+            image_to_draw = self.image
+            if not self.facing_right:
+                image_to_draw = pygame.transform.flip(self.image, True, False)
+        
+            surface.blit(image_to_draw, (pos_in_screen_x, pos_in_screen_y))
+
 
     def handle_input(self, keys_pressed):
         

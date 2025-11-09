@@ -1,13 +1,21 @@
 # settings.py
 import pygame
+import random
 
 #Dimesiones de la pantalla
 SCREEN_WIDTH, SCREEN_HEIGHT = 1920, 1080
 
-#Variable del bucle infinito
+#Estados del juego
 running = True
 PLAYING = "playing"
 LEVEL_UP = "level_up"
+START_MENU = "start_menu"
+GAME_OVER = "game_over"
+
+#FONTS
+FONT_TITLE = pygame.font.SysFont("Arial", 60)
+FONT_MENU = pygame.font.SysFont("Arial", 30)
+
 
 #Ajustes de FPS
 FPS = 60
@@ -29,14 +37,10 @@ ANIMATION_SPEED_SHOOT = 100
 ANIMATION_SPEED_DEATH = 150
 ANIMATION_SPEED_ATACK = 85
 PLAYER_MAGNET_RADIUS = 150
-UPGRADE_DATA = {
-    "health_up": ("Vida maxima +", "20 Vida maxima"),
-    "damage_up": ("Daño de Flecha +", "+5 Daño"),
-    "speed_up": ("Velocidad +", "+10% Velocidad de Movimiento"),
-    "arrow_speed_up": ("Velocidad de Flecha +", "+10% Velocidad de Flecha")
-}
+UPGRADE_ICON_ANIM_SPEED = 200
 
 #Ajustes del enemigo
+NUM_ENEMIES = 10
 ENEMY_DETECTION_RADIUS = 1500.
 ENEMY_ATTACK_RADIUS = 50
 ENEMY_SPEED = 3 
@@ -46,7 +50,10 @@ ENEMY_SPEED_MAX_MOD = 1.0
 
 #Entidades 
 ARROW_SPEED = 10
-GEM_PATH_SPRITESHEET = "./assets/gems/gems.png"
+CASTLE = "Castle"
+TOWER = "Tower"
+HOUSE = "House1"
+BARRACKS = "Barracks"
 GEM_ANIMATION_SPEED = 150
 GEM_STATS = {
     "gold": ([
@@ -89,9 +96,21 @@ GEM_STATS = {
 
 
 #Rutas de archivos - PATHS
+PATH_START_SCREEN_BG = "./assets/ui/start_screen_background.jpg"
 PATH_ICON_GAME = "./assets/Icons/icon_game.png"
 PATH_PLAYER = "./assets/units"
 PATH_ARROW = "./assets/arrow/arrow.png"
+UI_PATH_SPRITESHEET = "./assets/ui/ui_spritesheet.png"
+UI_PATH_BACKGROUND = "./assets/ui/background/"
+BUILDINGS_PATH = UI_PATH_BACKGROUND + "buildings/"
+
+#ICONOS DE MEJORAS
+UPGRADE_DATA = {
+    "health_up": ("Vida maxima +", "20 Vida maxima", UI_PATH_SPRITESHEET, [(401,195,14,13),(417,195,14,13),(435,195,10,13),(454,195,5,13),(481,195,14,13)]),
+    "damage_up": ("Daño de Flecha +", "+5 Daño", UI_PATH_SPRITESHEET, [(756,592,7,16), (773, 593,5,13)]),
+    "speed_up": ("Velocidad +", "+10% Velocidad de Movimiento", f"{PATH_PLAYER}/black/Archer/Run.png", [(57,51,70,85),(249,47,73,89),(443,46,71,90),(635,47,69,89)]),
+    "arrow_speed_up": ("Velocidad de Flecha +", "+10% Velocidad de Flecha", PATH_ARROW, [(10,26,43,12)] )
+}
 
 #Colores
 ENEMIES_COLOR = "red"
@@ -140,4 +159,4 @@ def apply_upgrade(player, upgrade_key):
         player.stats.speed *= 1.10
         
     elif upgrade_key == "arrow_speed_up":
-        ARROW_SPEED *= 1.10
+        player.stats.arrow_speed *= 1.10

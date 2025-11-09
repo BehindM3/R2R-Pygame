@@ -15,8 +15,8 @@ class Archer(Character):
             speed=settings.PLAYER_SPEED,
             xp_to_next_level=100
         )
-
         super().__init__(stats_obj=player_stats)
+        self.pending_level_ups = 0
 
         #Cargar imagenes del arquero
         self.load_sprites(colour)
@@ -24,6 +24,7 @@ class Archer(Character):
         #Definimos la imagen y rect inicial
         self.image = self.animation["idle"][0]
         self.rect = self.image.get_rect(center=(settings.SCREEN_WIDTH//2, settings.SCREEN_HEIGHT//2))
+        
 
     def load_sprites(self, colour):
         
@@ -92,15 +93,22 @@ class Archer(Character):
         player_world_x = camera_x + self.rect.centerx
         player_world_y = camera_y + self.rect.centery
 
-        new_arrow = Arrow(player_world_x, player_world_y, self.facing_direction)
+        new_arrow = Arrow(player_world_x, player_world_y, self.facing_direction, self.stats.arrow_speed)
         return new_arrow        
 
     def add_xp(self, amount):
-        did_level_up = self.stats.add_xp(amount)
+        levels_gained = self.stats.add_xp(amount)
 
-        if did_level_up:
-            print(f"La clase Archer se enteró del LEVEL UP!")
-            self.stats.heal(25)
-
-        return did_level_up
+        if levels_gained > 0:
+            self.pending_level_ups += levels_gained
+            print(f"Ganados: {levels_gained} niveles, pendientes {self.pending_level_ups}")
+            self.stats.heal(20)
         
+        return levels_gained
+
+    def draw(self, surface):
+        if self.image and self.rect:
+            image_to_draw = self.image
+            if not self.facing_right:
+                image_to_draw = pygame.transform.flip(self.image, True, False)
+            surface.blit(image_to_draw, self.rect)

@@ -2,7 +2,7 @@ import pygame
 import settings
 
 class Arrow:
-    def __init__(self, x, y, direction):
+    def __init__(self, x, y, direction, speed):
 
         try:    
             original_image = pygame.image.load(settings.PATH_ARROW).convert_alpha()
@@ -12,7 +12,7 @@ class Arrow:
             original_image = pygame.Surface((32, 10))
             original_image.fill((255, 0, 0))
 
-        self.speed = settings.ARROW_SPEED
+        self.speed = speed
         self.direction = direction
 
         if self.direction == settings.RIGHT:
@@ -43,7 +43,7 @@ class Arrow:
         if self.rect.x > 5000 or self.rect.x < -2000 or self.rect.y > 5000 or self.rect.y < -2000:
             self.is_active = False
     
-    def git (self, surface, camera_x, camera_y):
+    def draw(self, surface, camera_x, camera_y):
         pos_x = self.rect.x - camera_x
         pos_y = self.rect.y - camera_y
         surface.blit(self.image, (pos_x, pos_y))
