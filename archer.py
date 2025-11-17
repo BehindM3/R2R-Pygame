@@ -25,7 +25,6 @@ class Archer(Character):
         self.image = self.animation["idle"][0]
         self.rect = self.image.get_rect(center=(settings.SCREEN_WIDTH//2, settings.SCREEN_HEIGHT//2))
         
-
     def load_sprites(self, colour):
         
         CH_CLASS = "Archer"
@@ -112,3 +111,15 @@ class Archer(Character):
             if not self.facing_right:
                 image_to_draw = pygame.transform.flip(self.image, True, False)
             surface.blit(image_to_draw, self.rect)
+
+    def update(self, keys, arrows_list):
+        dx, dy = self.handle_input(keys)
+        self.rect.x += dx
+        self.rect.y += dy
+
+        action = self.update_animation()
+        if action == settings.SHOOT:
+            arr = self.perform_attack_action()
+            if arr:
+                arrows_list.append(arr)
+

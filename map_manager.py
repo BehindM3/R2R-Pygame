@@ -11,15 +11,15 @@ class MapManager:
             self.tiles_spritesheet_water_detail = pygame.image.load(f"{settings.UI_PATH_BACKGROUND}terrains/Water_Foam.png").convert_alpha()
     
             self.prop_images = {
-                "tree1" : pygame.image.load(f"{settings.UI_PATH_BACKGROUND}trees/Tree1.png"),
-                "tree2" : pygame.image.load(f"{settings.UI_PATH_BACKGROUND}trees/Tree2.png"),
-                "tree3" : pygame.image.load(f"{settings.UI_PATH_BACKGROUND}trees/Tree3.png"),
-                "tree4" : pygame.image.load(f"{settings.UI_PATH_BACKGROUND}trees/Tree4.png"),
-                "rock1" : pygame.image.load(f"{settings.UI_PATH_BACKGROUND}rocks/Rock1.png"),
-                "rock2" : pygame.image.load(f"{settings.UI_PATH_BACKGROUND}rocks/Rock2.png"),
-                "rock3" : pygame.image.load(f"{settings.UI_PATH_BACKGROUND}rocks/Rock3.png"),
-                "rock3" : pygame.image.load(f"{settings.UI_PATH_BACKGROUND}rocks/Rock4.png")
+                "tree1" : pygame.image.load(f"{settings.UI_PATH_BACKGROUND}trees/Tree1.png").convert_alpha(),
+                "tree2" : pygame.image.load(f"{settings.UI_PATH_BACKGROUND}trees/Tree2.png").convert_alpha(),
+                "tree3" : pygame.image.load(f"{settings.UI_PATH_BACKGROUND}trees/Tree3.png").convert_alpha(),
+                "tree4" : pygame.image.load(f"{settings.UI_PATH_BACKGROUND}trees/Tree4.png").convert_alpha(),
+                "rock1" : pygame.image.load(f"{settings.UI_PATH_BACKGROUND}rocks/Rock1.png").convert_alpha(),
+                "rock2" : pygame.image.load(f"{settings.UI_PATH_BACKGROUND}rocks/Rock2.png").convert_alpha(),
+                "rock3" : pygame.image.load(f"{settings.UI_PATH_BACKGROUND}rocks/Rock4.png").convert_alpha(),
             }
+
 
         except Exception as e:
             print(f"Error al cargar assets del mapa: {e}")
@@ -51,19 +51,18 @@ class MapManager:
 
         MAP_WIDTH_TILES = 150  
         MAP_HEIGHT_TILES = 150  
+
         # Guardamos los límites del mapa en píxeles
         self.map_width_pixels = MAP_WIDTH_TILES * self.tile_size
         self.map_height_pixels = MAP_HEIGHT_TILES * self.tile_size
         
         self.floor_layout = self.generate_map_layout(MAP_WIDTH_TILES, MAP_HEIGHT_TILES)
-        self.structure_layout = [
-            (settings.CASTLE, 800, 500),
-            (settings.BARRACKS, 1200, 400),
-            (settings.TOWER, 800, 500),
-            (settings.HOUSE, 1200, 400)
-        ]
-        self.prop_layout = []
+
+        # Ciudades generadas proceduralmente
+        self.structure_layout = self.generate_structure_layout(num_cities = 1)
         
+        # Props (árboles/rocas) generados proceduralmente
+        self.prop_layout = self.generate_prop_layout(num_props=120)
 
 
     def _get_tile(self, x,y,w,h):
@@ -101,14 +100,6 @@ class MapManager:
                     draw_y = world_y - camera_y
                     
                     surface.blit(tile_image, (draw_x, draw_y))
-
-    def draw_props(self, surface, camera_x, camera_y):
-        for key, world_x, world_y in self.prop_layout:
-            if key in self.prop_images:
-                img = self.prop_images[key]
-                draw_x = world_x - camera_x
-                draw_y = world_y - camera_y
-                surface.blit(img, (draw_x, draw_y))
 
     def draw_background(self, surface, camera_x, camera_y):
         try:
@@ -193,6 +184,15 @@ class MapManager:
         
         return tile_id == 99
     
+    def is_near_water(self, world_x, world_y):
+
+        offsets = [-self.tile_size, 0, self.tile_size]
+        for ox in offsets:
+            for oy in offsets:
+                if self.is_water_pit_at(world_x + ox, world_y + oy):
+                    return True
+        return False
+
     def _stamp_template(self, main_layout, template, x_offset, y_offset):
         template_height = len(template)
         template_width = len(template[0])
@@ -206,3 +206,140 @@ class MapManager:
 
                 main_layout[map_y][map_x] = tile_id
 
+    def generate_structure_layout(self, num_cities=3):
+        layout = []
+        city_centers = []
+        attempts = 0
+        max_attempts = num_cities * 50
+        margin = 300  
+
+        # Elegimos centros de ciudad separados y fuera del agua
+        while len(city_centers) < num_cities and attempts < max_attempts:
+            attempts += 1
+            center_x = random.randint(margin, self.map_width_pixels - margin)
+            center_y = random.randint(margin, self.map_height_pixels - margin)
+
+            # Usamos el helper "cerca de agua" para que no queden al lado de pozos
+            if self.is_near_water(center_x, center_y):
+                continue
+
+            too_close = False
+            for cx, cy in city_centers:
+                dx = center_x - cx
+                dy = center_y - cy
+                if dx * dx + dy * dy < (600 * 600):
+                    too_close = True
+                    break
+            if too_close:
+                continue
+
+            city_centers.append((center_x, center_y))
+
+        # Para cada ciudad, ponemos los edificios alrededor del centro
+        for center_x, center_y in city_centers:
+            candidate_structure = [
+                (settings.CASTLE,   center_x - 220, center_y +  40),
+                (settings.HOUSE,    center_x +  40, center_y -  20),
+                (settings.BARRACKS, center_x +  40, center_y + 120),
+                (settings.TOWER,    center_x - 220, center_y - 120),
+            ]
+
+            for struct_type, wx, wy in candidate_structure:
+                foot_x = wx + 64
+                foot_y = wy + 128
+
+                # No cerca de agua / pozo
+                if self.is_near_water(foot_x, foot_y):
+                    continue
+
+                layout.append((struct_type, wx, wy))
+
+        return layout
+    
+    def generate_prop_layout(self, num_props=120):
+        layout = []
+        attempts = 0
+        max_attempts = num_props * 5
+
+        structure_positions = [(x, y) for (_, x, y) in self.structure_layout]
+        prop_keys = list(self.prop_images.keys())
+
+        if not prop_keys:
+            return []
+
+        # margen en píxeles desde el borde del mapa
+        margin = self.tile_size * 2  # 2 tiles hacia adentro
+
+        while len(layout) < num_props and attempts < max_attempts:
+            attempts += 1
+
+            # Elegimos primero el tipo de prop para saber su tamaño
+            prop_type = random.choice(prop_keys)
+            img = self.prop_images[prop_type]
+
+            max_x = max(margin, self.map_width_pixels - margin - img.get_width())
+            max_y = max(margin, self.map_height_pixels - margin - img.get_height())
+
+            world_x = random.randint(margin, max_x)
+            world_y = random.randint(margin, max_y)
+
+            # Pie del árbol/roca
+            foot_x = world_x + img.get_width() // 2
+            foot_y = world_y + img.get_height() - 10
+
+            # No en pozos ni fuera del mapa
+            if self.is_water_pit_at(foot_x, foot_y):
+                continue
+
+            # No demasiado cerca de estructuras
+            too_close = False
+            for sx, sy in structure_positions:
+                dx = foot_x - sx
+                dy = foot_y - sy
+                if dx * dx + dy * dy < (200 * 200):
+                    too_close = True
+                    break
+            if too_close:
+                continue
+
+            layout.append((prop_type, world_x, world_y))
+
+        return layout
+
+    def get_props_for_render(self, camera_x, camera_y):
+        items = []
+        screen_w, screen_h = settings.SCREEN_WIDTH, settings.SCREEN_HEIGHT
+
+        # Ordenamos por world_y para tener profundidad lógica entre props
+        sorted_props = sorted(self.prop_layout, key=lambda item: item[2])
+
+        for key, world_x, world_y in sorted_props:
+            img = self.prop_images.get(key)
+            if not img:
+                continue
+
+            draw_x = world_x - camera_x
+            draw_y = world_y - camera_y
+
+            # Culling básico
+            if draw_x + img.get_width() < 0 or draw_x > screen_w:
+                continue
+            if draw_y + img.get_height() < 0 or draw_y > screen_h:
+                continue
+
+            depth = draw_y + img.get_height()  # “pie” del sprite
+            items.append((depth, img, draw_x, draw_y))
+
+        return items
+
+    def draw(self, surface, camera_x, camera_y, structures):
+        self.draw_background(surface, camera_x, camera_y)
+        self.draw_floor(surface, camera_x, camera_y)
+
+        # Props ordenados
+        for depth, img, dx, dy in self.get_props_for_render(camera_x, camera_y):
+            surface.blit(img, (dx, dy))
+
+        # Estructuras
+        for struct in structures:
+            struct.draw(surface, camera_x, camera_y)

@@ -140,8 +140,6 @@ class Enemy(Character):
 
         self.update_animation()
 
-   
-
     def die(self):
         super().die()
 
@@ -161,3 +159,22 @@ class Enemy(Character):
         new_gem = Gem(self.rect.centerx, self.rect.centery, gem_type_to_drop)
         
         return new_gem
+    
+    def can_attack(self, target):
+        if not self.stats.alive:
+            return False
+
+        # distancia al objetivo
+        dx = target.rect.centerx - self.rect.centerx
+        dy = target.rect.centery - self.rect.centery
+        dist = (dx * dx + dy * dy) ** 0.5
+
+        now = pygame.time.get_ticks()
+
+        # está en rango
+        in_range = dist < self.attack_radius
+
+        # cooldown cumplido
+        cd_ready = (now - self.last_attack_time > self.attack_cooldown)
+
+        return in_range and cd_ready
